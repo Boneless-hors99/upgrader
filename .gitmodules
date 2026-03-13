@@ -1,0 +1,6 @@
+[submodule "entt"]
+	path = entt
+	url = https://github.com/skypjack/entt
+[submodule "external/entt"]
+	path = external/entt
+	url = https://github.com/skypjack/entt
