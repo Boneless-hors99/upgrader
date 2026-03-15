@@ -10,6 +10,21 @@ const char *Text::chr() { return m_str.c_str(); }
 
 Vector2 Text::msr() { return msr(m_str); }
 
+Vector2 Text::msr(std::string str) {
+  return MeasureTextEx(GetFontDefault(), str.c_str(), 24.0f, 1.0f);
+}
+
+bool Text::fits(float w) {
+  std::istringstream t(m_str);
+  std::string s, r;
+
+  while (std::getline(t, s, ' ')) {
+    if (msr(s).x > w)
+      return false;
+  }
+  return true;
+}
+
 std::pair<Text, Text> Text::split(float w) {
   Vector2 size = msr();
   if (size.x <= w) {
@@ -31,13 +46,6 @@ std::pair<Text, Text> Text::split(float w) {
 }
 
 void Text::Render(Vector2 pos) {
-  DrawTextPro(GetFontDefault(), chr(), pos, Vector2(msr().x / 2.0f, 0.0f), 0.0f,
-              24.0f, 1.0f, m_col);
-}
-
-template <> float Desc<Text>::msr() {
-  float sum{};
-  for (const auto &t : m_text)
-    sum += t->msr().x;
-  return sum;
+  DrawTextPro(GetFontDefault(), chr(), pos, Vector2(0.0f, 0.0f), 0.0f, 24.0f,
+              1.0f, m_col);
 }

@@ -16,10 +16,25 @@ add_executable(${PROJECT_NAME}
     src/main.cpp
     src/Game.cpp
     src/Text.cpp
+    src/Upgrades.cpp
+    src/UpgradeFactory.cpp
     src/Resources.cpp
 )
 
+add_executable(bitshifter
+  src/bitshifter.cpp
+)
+
+add_executable(packer
+  src/packer.cpp
+)
+
 target_include_directories(${PROJECT_NAME}
+  PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}/include
+)
+
+target_include_directories(bitshifter
   PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/include
 )

@@ -4,6 +4,7 @@
 #include <raymath.h>
 #include <string>
 #include <string_view>
+#include <type_traits>
 #include <vector>
 
 class Text {
@@ -15,9 +16,10 @@ public:
   const char *chr();
 
   Vector2 msr();
-  static Vector2 msr(std::string str) {
-    return MeasureTextEx(GetFontDefault(), str.c_str(), 24.0f, 1.0f);
-  }
+  static Vector2 msr(std::string str);
+
+  bool fits(float w);
+
   std::pair<Text, Text> split(float w);
 
   void Render(Vector2 pos);
@@ -28,45 +30,103 @@ private:
   Color m_backcol;
 };
 
-template <typename... Args> class Desc {
-  static_assert((std::is_base_of_v<Text, Args> && ...),
-                "All arguments must derive from Text");
+#define LINES std::vector<Desc>
 
+class Desc {
 public:
-  Desc(Args &&...args) {
+  Desc(const Desc &) = delete;
+  Desc &operator=(const Desc &) = delete;
+
+  Desc(Desc &&) = default;
+  Desc &operator=(Desc &&) = default;
+
+  template <typename... Args> Desc(Args &&...args) {
+    static_assert((std::is_base_of_v<Text, Args> && ...),
+                  "Args must derive from Text");
     (Append(std::make_unique<Args>(std::forward<Args>(args))), ...);
   }
 
-  float msr();
-  float Render(Vector2 pos, float w) {
-    Vector2 curs = Vector2(0.0f, 0.0f);
-    for (const auto &t : m_text) {
-      bool text_split = false;
-      Text ctxt = *t.get();
-      while (!text_split) {
+  void Append(Text t) { Append(std::make_unique<Text>(t)); }
 
-        auto pair = ctxt.split(w - curs.x);
+  // Returns total width of texts in description
+  float msr() {
+    float sum{};
+    for (const auto &t : m_text)
+      sum += t->msr().x;
+    return sum;
+  }
 
-        // Render first text at cursor & move cursor
-        if (!pair.first.str().empty()) {
-          Vector2 tpos = pos + curs;
-          pair.first.Render(tpos);
-          curs.x += pair.first.msr().x;
-        }
+  static int AddText(LINES *lines, Text text, float maxwidth) {
 
-        if (pair.second.str().empty()) {
-          text_split = true;
-        } else {
-          ctxt = pair.second;
-          curs.y += pair.second.msr().y;
-          curs.x = 0;
-        }
-      }
+    if (!text.fits(maxwidth)) {
+      return -1;
     }
-    return curs.y;
+
+    int line;
+    bool finished = false;
+    while (!finished) {
+      line = static_cast<int>(lines->size()) - 1;
+      float occupied = (*lines)[line].msr();
+      float space = maxwidth - occupied;
+
+      auto splitted = text.split(space);
+
+      if (splitted.first.str().empty())
+        goto nextline;
+
+      (*lines)[line].Append(splitted.first);
+
+      if (splitted.second.str().empty()) {
+        break;
+      }
+
+      text = splitted.second;
+
+    nextline:
+      lines->push_back(Desc(Text("")));
+      line++;
+    }
+    return line;
+  }
+
+  void RenderLine(Vector2 pos) {
+    ResetCursor();
+    m_cursor.x -= msr() / 2.0f;
+    for (const auto &t : m_text) {
+      t->Render(pos + m_cursor);
+      m_cursor.x += t->msr().x;
+    }
+  }
+
+  float Render(Vector2 pos, float w) {
+    ResetCursor();
+    LINES lines;
+    lines.emplace_back();
+    int line = 0;
+
+    // Turns this description into LINES with each being maximum w long
+    for (const auto &t : m_text) {
+      line = AddText(&lines, *t.get(), w);
+      if (line < 0)
+        goto overflow;
+    }
+
+    for (Desc &l : lines) {
+      l.RenderLine(pos + m_cursor);
+      m_cursor.y += 24.0f;
+    }
+
+    return m_cursor.y;
+  overflow:
+    Text("<->", RED).Render(pos + m_cursor);
+    return -1;
   }
 
 private:
   void Append(std::unique_ptr<Text> t) { m_text.push_back(std::move(t)); }
+
   std::vector<std::unique_ptr<Text>> m_text;
+  Vector2 m_cursor;
+
+  void ResetCursor() { m_cursor = {0.0f, 0.0f}; }
 };
