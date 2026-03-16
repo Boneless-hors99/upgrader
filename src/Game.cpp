@@ -22,15 +22,19 @@ void Game::DrawUpgrades() {
   auto &i = UpgradeManager::instance();
   // TODO: Implement zoom
   Vector2 window_size = WindowSize();
+  Vector2 mouse_pos = GetMousePosition();
   UpgradeVec fits((window_size.x / UPGRADE_SPACE.x) + 2,
                   (window_size.y / UPGRADE_SPACE.y) + 2);
 
   UpgradeVec cursor(0, 0);
   bool done = false;
+
   while (!done) {
+
     UpgradeVec screen_pos = cursor - (fits / 2.0f);
     UpgradeVec up_pos = screen_pos + m_pos;
     auto *up = i.GetUpgrade(up_pos);
+
     if (up) {
 
       Vector2 center = window_size / 2.0f;
@@ -39,25 +43,28 @@ void Game::DrawUpgrades() {
       draw_pos.y += screen_pos.y * UPGRADE_SPACE.y;
       draw_pos += m_offset;
 
-      up->Draw(draw_pos);
+      up->Draw(draw_pos, mouse_pos);
     }
 
     if (cursor == fits) {
+
       done = true;
       break;
     }
     if (cursor.x >= fits.x) {
+
       cursor.x = 0;
       cursor.y++;
       continue;
     }
+
     cursor.x++;
   }
 }
 
 void Game::DrawAll() {
   BeginDrawing();
-  ClearBackground(WHITE);
+  ClearBackground(BLACK);
 
   DrawUpgrades();
 

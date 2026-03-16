@@ -35,11 +35,15 @@ std::pair<Text, Text> Text::split(float w) {
   bool enuf = false;
 
   while (std::getline(t, s, ' ')) {
-    if (!enuf && msr(r + s).x <= w) {
-      r += s + ' ';
+    if (!enuf && msr(r + (r.empty() ? "" : " ") + s).x <= w) {
+      if (!r.empty())
+        r += ' ';
+      r += s;
     } else {
       enuf = true;
-      e += s + ' ';
+      if (!e.empty())
+        e += ' ';
+      e += s;
     }
   }
   return {Text(r, m_col, m_backcol), Text(e, m_col, m_backcol)};

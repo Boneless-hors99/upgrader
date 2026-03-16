@@ -109,7 +109,7 @@ public:
   Upgrade(Desc d) : m_pos(0), m_description(std::move(d)) {}
   void SetPos(UpgradeVec v) { m_pos = v; }
 
-  void Draw(Vector2 pos);
+  bool Draw(Vector2 pos, Vector2 mouse_pos);
 
 private:
   UpgradeVec m_pos;
