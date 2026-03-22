@@ -1,33 +1,39 @@
 #pragma once
+#define IMGUI_DEFINE_MATH_OPERATORS
+#include <imgui.h>
 #include <memory>
-#include <raylib.h>
-#include <raymath.h>
 #include <string>
 #include <string_view>
 #include <type_traits>
 #include <vector>
 
+#define WHITE ImVec4(1.0f, 1.0f, 1.0f, 1.0f)
+#define RED ImVec4(1.0f, 0.0f, 0.0f, 1.0f)
+#define GREEN ImVec4(0.0f, 1.0f, 0.0f, 1.0f)
+#define BLUE ImVec4(0.0f, 0.0f, 1.0f, 1.0f)
+
 class Text {
 public:
-  Text(std::string_view str, Color col = WHITE, Color backcol = Color(0.0f))
+  Text(std::string_view str, ImVec4 col = ImVec4(1.0f, 1.0f, 1.0f, 1.0f),
+       ImVec4 backcol = ImVec4(0.0f, 0.0f, 0.0f, 0.0f))
       : m_str(str), m_col(col), m_backcol(backcol) {}
 
   std::string str();
   const char *chr();
 
-  Vector2 msr();
-  static Vector2 msr(std::string str);
+  ImVec2 msr();
+  static ImVec2 msr(std::string str);
 
   bool fits(float w);
 
   std::pair<Text, Text> split(float w);
 
-  void Render(Vector2 pos);
+  void Render(ImVec2 pos);
 
 private:
   std::string m_str;
-  Color m_col;
-  Color m_backcol;
+  ImVec4 m_col;
+  ImVec4 m_backcol;
 };
 
 #define LINES std::vector<Desc>
@@ -89,16 +95,19 @@ public:
     return line;
   }
 
-  void RenderLine(Vector2 pos) {
+  void RenderLine(ImVec2 pos) {
     ResetCursor();
-    m_cursor.x -= msr() / 2.0f;
+    float s = msr();
+    m_cursor.x -= s / 2.0f;
     for (const auto &t : m_text) {
-      t->Render(pos + m_cursor);
+      ImVec2 tpos = pos;
+      tpos.y += t->msr().y / 2.0f;
+      t->Render(tpos + m_cursor);
       m_cursor.x += t->msr().x;
     }
   }
 
-  float Render(Vector2 pos, float w) {
+  float Render(ImVec2 pos, float w) {
     ResetCursor();
     LINES lines;
     lines.emplace_back();
@@ -118,7 +127,7 @@ public:
 
     return m_cursor.y;
   overflow:
-    Text("<->", RED).Render(pos + m_cursor);
+    Text("<->", ImVec4(1.0f, 0.0f, 0.0f, 1.0f)).Render(pos + m_cursor);
     return -1;
   }
 
@@ -126,7 +135,7 @@ private:
   void Append(std::unique_ptr<Text> t) { m_text.push_back(std::move(t)); }
 
   std::vector<std::unique_ptr<Text>> m_text;
-  Vector2 m_cursor;
+  ImVec2 m_cursor;
 
   void ResetCursor() { m_cursor = {0.0f, 0.0f}; }
 };

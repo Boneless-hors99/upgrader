@@ -1,10 +1,11 @@
 #pragma once
 
 #include "Text.hpp"
+#include <GL/gl.h>
 #include <cstdint>
 #include <fstream>
+#include <imgui.h>
 #include <memory>
-#include <raylib.h>
 #include <unordered_map>
 #include <vector>
 
@@ -45,10 +46,10 @@ inline PackEntry *FindEntry(uint64_t key) {
   }
 }
 
-static std::unordered_map<uint64_t, Texture2D> textureCache;
+static std::unordered_map<uint64_t, ImTextureID> textureCache;
 
-const Vector2 UPGRADE_SIZE(64.0f, 64.0f);
-const Vector2 UPGRADE_SPACE(UPGRADE_SIZE * 2.5f);
+const ImVec2 UPGRADE_SIZE(64.0f, 64.0f);
+const ImVec2 UPGRADE_SPACE(UPGRADE_SIZE * 2.5f);
 
 void RegisterUpgrades();
 
@@ -61,31 +62,7 @@ struct UpgradeVec {
 
   uint64_t i64() { return (static_cast<uint64_t>(x) << 32) | y; }
 
-  Texture2D tex() {
-    uint64_t key = i64();
-
-    // already loaded?
-    auto it = textureCache.find(key);
-    if (it != textureCache.end())
-      return it->second;
-
-    PackEntry *e = FindEntry(key);
-    if (!e)
-      return Texture2D{};
-
-    std::vector<unsigned char> buffer(e->size);
-
-    packFile.seekg(e->offset);
-    packFile.read((char *)buffer.data(), e->size);
-
-    Image img = LoadImageFromMemory(".png", buffer.data(), buffer.size());
-    Texture2D tex = LoadTextureFromImage(img);
-    UnloadImage(img);
-
-    textureCache[key] = tex;
-
-    return tex;
-  }
+  ImTextureID tex();
 
   int32_t x;
   int32_t y;
@@ -109,7 +86,7 @@ public:
   Upgrade(Desc d) : m_pos(0), m_description(std::move(d)) {}
   void SetPos(UpgradeVec v) { m_pos = v; }
 
-  bool Draw(Vector2 pos, Vector2 mouse_pos);
+  bool Draw(ImVec2 pos, ImVec2 mouse_pos);
 
 private:
   UpgradeVec m_pos;

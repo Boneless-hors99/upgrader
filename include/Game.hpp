@@ -1,8 +1,8 @@
 #include "Upgrades.hpp"
-#include <raylib.h>
+#include <imgui_impl_glfw.h>
 
 #define WINDOW_NAME "upgrader"
-const Vector2 DEFAULT_WINDOW_SIZE(1920.0f, 1080.0f);
+const ImVec2 DEFAULT_WINDOW_SIZE(1920.0f, 1080.0f);
 
 class Game {
 public:
@@ -12,10 +12,13 @@ public:
   void end();
 
 private:
+  GLFWwindow *m_window;
+  ImVec4 clear_color = ImVec4(0.0f, 0.0f, 0.0f, 1.00f);
+
   bool m_end = false;
 
   UpgradeVec m_pos;
-  Vector2 m_offset;
+  ImVec2 m_offset;
 
   void InitUpgrades();
   void InitWindow();
@@ -23,5 +26,5 @@ private:
   void DrawUpgrades();
   void DrawAll();
 
-  Vector2 WindowSize();
+  ImVec2 WindowSize();
 };
