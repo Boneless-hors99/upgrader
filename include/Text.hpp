@@ -8,6 +8,7 @@
 #include <vector>
 
 #define WHITE ImVec4(1.0f, 1.0f, 1.0f, 1.0f)
+#define LIGHT_GREY ImVec4(0.85f, 0.85f, 0.85f, 1.0f)
 #define RED ImVec4(1.0f, 0.0f, 0.0f, 1.0f)
 #define GREEN ImVec4(0.0f, 1.0f, 0.0f, 1.0f)
 #define BLUE ImVec4(0.0f, 0.0f, 1.0f, 1.0f)
@@ -35,6 +36,8 @@ private:
   ImVec4 m_col;
   ImVec4 m_backcol;
 };
+
+void DrawDescBackground(ImVec2 pos, ImVec2 size);
 
 #define LINES std::vector<Desc>
 
@@ -101,7 +104,6 @@ public:
     m_cursor.x -= s / 2.0f;
     for (const auto &t : m_text) {
       ImVec2 tpos = pos;
-      tpos.y += t->msr().y / 2.0f;
       t->Render(tpos + m_cursor);
       m_cursor.x += t->msr().x;
     }
@@ -120,15 +122,22 @@ public:
         goto overflow;
     }
 
+    // *0.5f does the top and bottom padding
+    DrawDescBackground(pos, ImVec2(w + ImGui::GetFontSize() * 2.0f,
+                                   ImGui::GetFontSize() * (lines.size() + 1)));
+    m_cursor.y += ImGui::GetFontSize() * 0.5f;
+
     for (Desc &l : lines) {
       l.RenderLine(pos + m_cursor);
-      m_cursor.y += 24.0f;
+      m_cursor.y += ImGui::GetFontSize();
     }
 
     return m_cursor.y;
   overflow:
+    DrawDescBackground(
+        pos, ImVec2(w + ImGui::GetFontSize() * 2.0f, ImGui::GetFontSize()));
     Text("<->", ImVec4(1.0f, 0.0f, 0.0f, 1.0f)).Render(pos + m_cursor);
-    return -1;
+    return m_cursor.y;
   }
 
 private:

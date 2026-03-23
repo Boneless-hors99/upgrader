@@ -51,6 +51,28 @@ void Text::Render(ImVec2 pos) {
   //             1.0f, m_col);
   ImGui::SetCursorPos(pos);
   ImGui::PushStyleColor(ImGuiCol_Text, ImGui::ColorConvertFloat4ToU32(m_col));
+
+  if (m_backcol.w > 0.0f) {
+    // TODO: PADDING & ROUNDING
+    ImGui::GetWindowDrawList()->AddRectFilled(
+        pos, pos + msr(), ImGui::ColorConvertFloat4ToU32(m_backcol));
+  }
+
+  // TODO: NEW FONT & SIZE
   ImGui::Text("%s", m_str.c_str());
+
   ImGui::PopStyleColor();
+}
+
+void DrawDescBackground(ImVec2 pos, ImVec2 size) {
+  auto *list = ImGui::GetWindowDrawList();
+
+  ImVec2 start = pos;
+  start.x -= size.x / 2.0f;
+
+  ImVec2 end = pos;
+  end.y += size.y;
+  end.x += size.x / 2.0f;
+
+  list->AddRectFilled(start, end, ImGui::ColorConvertFloat4ToU32(LIGHT_GREY));
 }

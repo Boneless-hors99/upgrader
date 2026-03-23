@@ -72,7 +72,8 @@ bool Upgrade::Draw(ImVec2 pos, ImVec2 mouse_pos) {
   ImGui::ImageButton(std::to_string(m_pos.i64()).c_str(), ImTextureRef(tex),
                      UPGRADE_SIZE);
   if (ImGui::IsItemHovered()) {
-    m_description.Render(ImVec2(pos.x, pos.y + UPGRADE_SIZE.y / 2.0f), 200.0f);
+    // TODO: TITLE & TYPES (CHECK BALATRO)
+    m_description.Render(ImVec2(pos.x, pos.y + UPGRADE_SIZE.y / 1.6f), 200.0f);
     return true;
   }
   return false;
