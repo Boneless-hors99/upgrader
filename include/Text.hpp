@@ -7,6 +7,7 @@
 #include <type_traits>
 #include <vector>
 
+#define BLACK ImVec4(0.0f, 0.0f, 0.0f, 1.0f)
 #define WHITE ImVec4(1.0f, 1.0f, 1.0f, 1.0f)
 #define LIGHT_GREY ImVec4(0.85f, 0.85f, 0.85f, 1.0f)
 #define RED ImVec4(1.0f, 0.0f, 0.0f, 1.0f)

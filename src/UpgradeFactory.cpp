@@ -6,7 +6,8 @@ using std::make_unique;
 
 void RegisterUpgrades() {
   auto &i = UpgradeManager::instance();
-  i.RegisterUpgrade(0, make_unique<Upgrade>(Desc(
-                           Text("TEST", BLUE, RED), Text(" DESCRIPTION", RED),
-                           Text("BLEBLEBLEBLEBLEBLEBLE", GREEN))));
+  i.RegisterUpgrade(
+      0, make_unique<Upgrade>(
+             Desc(Text("TEST", WHITE, BLACK), Text(" DESCRIPTION", RED, GREEN),
+                  Text("BLEBLEBLEBLEBLEBLEBLE", WHITE, BLUE))));
 }
