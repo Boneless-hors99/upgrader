@@ -16,7 +16,7 @@
 
 class Text {
 public:
-  Text(std::string_view str, ImVec4 col = ImVec4(1.0f, 1.0f, 1.0f, 1.0f),
+  Text(std::string_view str, ImVec4 col = BLACK,
        ImVec4 backcol = ImVec4(0.0f, 0.0f, 0.0f, 0.0f))
       : m_str(str), m_col(col), m_backcol(backcol) {}
 

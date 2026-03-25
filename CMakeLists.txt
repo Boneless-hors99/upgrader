@@ -10,6 +10,17 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 find_package(OpenGL REQUIRED)
 find_package(glfw3 REQUIRED)
 
+
+include(FetchContent)
+
+FetchContent_Declare(
+    entt
+    GIT_REPOSITORY https://github.com/skypjack/entt.git
+    GIT_TAG main
+)
+
+FetchContent_MakeAvailable(entt)
+
 # ---- ImGui ----
 set(IMGUI_DIR ${CMAKE_SOURCE_DIR}/external/imgui)
 
@@ -54,6 +65,7 @@ target_include_directories(upgrader PRIVATE
 target_link_libraries(upgrader
     PRIVATE
     imgui
+    EnTT::EnTT
 )
 
 target_compile_options(upgrader PRIVATE -Wall -Wextra)
@@ -64,5 +76,6 @@ target_include_directories(bitshifter PRIVATE
   ${CMAKE_CURRENT_SOURCE_DIR}/external/stb
   ${CMAKE_CURRENT_SOURCE_DIR}/include
 )
+target_link_libraries(bitshifter PRIVATE EnTT::EnTT)
 
 add_executable(packer src/packer.cpp)

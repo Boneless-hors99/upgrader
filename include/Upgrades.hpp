@@ -1,6 +1,7 @@
 #pragma once
 
 #include "Text.hpp"
+#include "entt/entity/fwd.hpp"
 #include <GL/gl.h>
 #include <cstdint>
 #include <fstream>
@@ -8,6 +9,8 @@
 #include <memory>
 #include <unordered_map>
 #include <vector>
+
+#include <entt/entt.hpp>
 
 struct PackEntry {
   uint64_t key;
@@ -91,6 +94,7 @@ public:
 private:
   UpgradeVec m_pos;
   Desc m_description;
+  std::vector<UpgradeVec> connections;
 };
 
 class UpgradeManager {
@@ -99,14 +103,18 @@ public:
 
   void init();
 
-  void RegisterUpgrade(UpgradeVec pos, std::unique_ptr<Upgrade> u);
-  void RegisterUpgrade(uint64_t id, std::unique_ptr<Upgrade> u);
+  entt::registry &GetRegistry() { return m_registry; }
 
-  Upgrade *GetUpgrade(UpgradeVec pos);
-  Upgrade *GetUpgrade(uint64_t id);
+  entt::entity RegisterUpgrade(UpgradeVec pos);
+  entt::entity RegisterUpgrade(uint64_t id);
+
+  bool HasUpgrade(UpgradeVec pos);
+  entt::entity GetUpgrade(UpgradeVec pos);
+  entt::entity GetUpgrade(uint64_t id);
 
 private:
-  std::unordered_map<uint64_t, std::unique_ptr<Upgrade>> upgrades;
+  entt::registry m_registry;
+  std::unordered_map<uint64_t, entt::entity> m_upgrades;
 
   UpgradeManager();
 };

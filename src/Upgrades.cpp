@@ -1,4 +1,5 @@
 #include "Upgrades.hpp"
+#include "entt/entity/fwd.hpp"
 #include <GL/gl.h>
 #include <cstdint>
 #include <imgui.h>
@@ -110,25 +111,29 @@ void UpgradeManager::init() {
   LoadPack("upgrades.bones");
 }
 
-void UpgradeManager::RegisterUpgrade(UpgradeVec pos,
-                                     std::unique_ptr<Upgrade> u) {
-  u->SetPos(pos);
-  RegisterUpgrade(pos.i64(), std::move(u));
+entt::entity UpgradeManager::RegisterUpgrade(UpgradeVec pos) {
+  return RegisterUpgrade(pos.i64());
 }
 
-void UpgradeManager::RegisterUpgrade(uint64_t id, std::unique_ptr<Upgrade> u) {
-  upgrades[id] = std::move(u);
+entt::entity UpgradeManager::RegisterUpgrade(uint64_t id) {
+  const auto entity = m_registry.create();
+  m_upgrades[id] = std::move(entity);
+  return entity;
 }
 
-Upgrade *UpgradeManager::GetUpgrade(UpgradeVec pos) {
+bool UpgradeManager::HasUpgrade(UpgradeVec pos) {
+  return m_upgrades.contains(pos.i64());
+}
+
+entt::entity UpgradeManager::GetUpgrade(UpgradeVec pos) {
   return GetUpgrade(pos.i64());
 }
 
-Upgrade *UpgradeManager::GetUpgrade(uint64_t id) {
-  auto it = upgrades.find(id);
-  if (it == upgrades.end())
-    return nullptr;
-  return it->second.get();
+entt::entity UpgradeManager::GetUpgrade(uint64_t id) {
+  auto it = m_upgrades.find(id);
+  if (it == m_upgrades.end())
+    return entt::entity();
+  return it->second;
 }
 
-UpgradeManager::UpgradeManager() { upgrades.reserve(100); }
+UpgradeManager::UpgradeManager() { m_upgrades.reserve(100); }

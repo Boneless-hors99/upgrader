@@ -5,7 +5,6 @@
 #include "imgui_impl_glfw.h"
 #include "imgui_impl_opengl3.h"
 #include <GLFW/glfw3.h>
-#include <iostream>
 
 void Game::InitUpgrades() {
   m_pos = UpgradeVec(0);
@@ -22,12 +21,14 @@ void Game::InitWindow() {
   glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
   glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 0);
 
+  glfwWindowHint(GLFW_RESIZABLE, GLFW_FALSE);
+  glfwWindowHint(GLFW_FLOATING, GLFW_TRUE);
+
   // Create window with graphics context
   float main_scale = ImGui_ImplGlfw_GetContentScaleForMonitor(
       glfwGetPrimaryMonitor()); // Valid on GLFW 3.3+ only
-  m_window =
-      glfwCreateWindow((int)(1280 * main_scale), (int)(800 * main_scale),
-                       "Dear ImGui GLFW+OpenGL3 example", nullptr, nullptr);
+  m_window = glfwCreateWindow(1920, 1080, "upgrader", nullptr, nullptr);
+  glfwSetWindowSize(m_window, 1920, 1080);
   if (m_window == nullptr)
     return;
   glfwMakeContextCurrent(m_window);
@@ -80,21 +81,24 @@ void Game::DrawUpgrades() {
   UpgradeVec cursor(0, 0);
   bool done = false;
 
+  auto &reg = i.GetRegistry();
+
   while (!done) {
 
     UpgradeVec screen_pos = cursor - (fits / 2.0f);
     UpgradeVec up_pos = screen_pos + m_pos;
-    auto *up = i.GetUpgrade(up_pos);
 
-    if (up) {
+    if (i.HasUpgrade(up_pos)) {
 
+      auto ent = i.GetUpgrade(up_pos);
+      auto &up = reg.get<Upgrade>(ent);
       ImVec2 center = window_size / 2.0f;
       ImVec2 draw_pos = center;
       draw_pos.x += screen_pos.x * UPGRADE_SPACE.x;
       draw_pos.y += screen_pos.y * UPGRADE_SPACE.y;
       draw_pos += m_offset;
 
-      up->Draw(draw_pos, mouse_pos);
+      up.Draw(draw_pos, mouse_pos);
     }
 
     if (cursor == fits) {
