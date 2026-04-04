@@ -5,6 +5,7 @@
 #include "imgui_impl_glfw.h"
 #include "imgui_impl_opengl3.h"
 #include <GLFW/glfw3.h>
+#include <iostream>
 
 void Game::InitUpgrades() {
   m_pos = UpgradeVec(0);
@@ -68,13 +69,14 @@ void Game::InitWindow() {
 void Game::init() {
   InitUpgrades();
   InitWindow();
+  auto &style = ImGui::GetStyle();
+  style.Colors[ImGuiCol_Button] = ImVec4(0.95, 0.95f, 0.95f, 1.0f);
 }
 
 void Game::DrawUpgrades() {
   auto &i = UpgradeManager::instance();
   // TODO: Implement zoom
   ImVec2 window_size = WindowSize();
-  ImVec2 mouse_pos = ImGui::GetCursorScreenPos();
   UpgradeVec fits((window_size.x / UPGRADE_SPACE.x) + 2,
                   (window_size.y / UPGRADE_SPACE.y) + 2);
 
@@ -82,6 +84,9 @@ void Game::DrawUpgrades() {
   bool done = false;
 
   auto &reg = i.GetRegistry();
+
+  ImDrawList *list = ImGui::GetWindowDrawList();
+  list->ChannelsSplit(2);
 
   while (!done) {
 
@@ -98,7 +103,7 @@ void Game::DrawUpgrades() {
       draw_pos.y += screen_pos.y * UPGRADE_SPACE.y;
       draw_pos += m_offset;
 
-      up.Draw(draw_pos, mouse_pos);
+      up.Draw(draw_pos, list);
     }
 
     if (cursor == fits) {
@@ -115,6 +120,8 @@ void Game::DrawUpgrades() {
 
     cursor.x++;
   }
+
+  list->ChannelsMerge();
 }
 
 void Game::DrawAll() {

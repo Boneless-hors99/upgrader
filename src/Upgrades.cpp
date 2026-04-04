@@ -1,10 +1,10 @@
 #include "Upgrades.hpp"
+#include "Text.hpp"
 #include "entt/entity/fwd.hpp"
 #include <GL/gl.h>
 #include <cstdint>
 #include <imgui.h>
 #include <iostream>
-#include <memory>
 #include <string>
 
 #define STB_IMAGE_IMPLEMENTATION
@@ -15,12 +15,16 @@ ImTextureID UpgradeVec::tex() {
 
   // already loaded?
   auto it = textureCache.find(key);
-  if (it != textureCache.end())
+  if (it != textureCache.end()) {
+    std::cout << "NO TEXTURE FOUND" << std::endl;
     return it->second;
+  }
 
   PackEntry *e = FindEntry(key);
-  if (!e)
+  if (!e) {
+    std::cout << "NO TEXTURE FOUND" << std::endl;
     return 0;
+  }
 
   std::vector<unsigned char> buffer(e->size);
 
@@ -64,41 +68,36 @@ ImTextureID UpgradeVec::tex() {
   return 0;
 }
 
-bool Upgrade::Draw(ImVec2 pos, ImVec2 mouse_pos) {
+bool Upgrade::Draw(ImVec2 pos, ImDrawList *list) {
   ImGui::SetCursorPos(pos - UPGRADE_SIZE / 2.0f);
+
   ImTextureID tex = m_pos.tex();
   if (!tex) {
     return false;
   }
+
+  list->ChannelsSetCurrent(0);
+  for (const auto connection : m_connections) {
+    ImVec2 lpos = pos;
+    lpos.x += 4.0f;
+    ImVec2 next_pos = lpos + (connection - m_pos) * UPGRADE_SPACE;
+    list->AddLine(lpos, next_pos, Col32(TextColor::WHITE), 4.0f);
+  }
+
+  list->ChannelsSetCurrent(1);
   ImGui::ImageButton(std::to_string(m_pos.i64()).c_str(), ImTextureRef(tex),
                      UPGRADE_SIZE);
+
   if (ImGui::IsItemHovered()) {
     // TODO: TITLE & TYPES (CHECK BALATRO)
-    m_description.Render(ImVec2(pos.x, pos.y + UPGRADE_SIZE.y / 1.6f), 200.0f);
+    ImVec2 descpos(pos.x, pos.y + UPGRADE_SIZE.y / 1.6f);
+    descpos.y += m_description.Render(descpos, 200.0f);
+    Desc price(m_price.toText());
+    price.Render(descpos, 200.0f);
     return true;
   }
+
   return false;
-  /*
-  Rectangle trec(pos.x, pos.y, UPGRADE_SIZE.x, UPGRADE_SIZE.y);
-  const float UPGRADE_PADDING = 16.0f;
-  Rectangle brec(pos.x - UPGRADE_SIZE.x / 2.0f - UPGRADE_PADDING / 2.0f,
-                 pos.y - UPGRADE_SIZE.y / 2.0f - UPGRADE_PADDING / 2.0f,
-                 UPGRADE_SIZE.x + UPGRADE_PADDING,
-                 UPGRADE_SIZE.y + UPGRADE_PADDING);
-  DrawRectangleRounded(brec, 0.05f, 10, GREEN);
-  ImTextureID tex = m_pos.tex();
-  if (tex.height == 0) {
-    return false;
-  }
-  DrawTexturePro(tex, Rectangle(0.0f, 0.0f, tex.width, tex.height), trec,
-                 UPGRADE_SIZE / 2.0f, 0.0f, WHITE);
-  if (CheckCollisionPointRec(mouse_pos, brec)) {
-    m_description.Render(
-        ImVec2(brec.x + brec.width / 2.0f, brec.y + brec.height), 200.0f);
-    return true;
-  }
-  return false;
-  */
 }
 
 UpgradeManager &UpgradeManager::instance() {

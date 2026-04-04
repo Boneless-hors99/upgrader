@@ -1,6 +1,8 @@
 #pragma once
 
+#include "Text.hpp"
 #include <cstdint>
+#include <string>
 
 class BigNumber {
 public:
@@ -16,10 +18,29 @@ public:
   bool operator<=(const BigNumber &b);
 
   BigNumber operator+(const BigNumber &b);
+  void operator+=(const BigNumber &b);
 
   BigNumber operator-(const BigNumber &b);
+  void operator-=(const BigNumber &b);
+
+  std::string toString();
 
 private:
   float n;
   uint64_t e;
+};
+
+enum class Currencies { Currency_X };
+
+std::string CtoString(Currencies currency);
+
+struct Price {
+  Price(Currencies cur, BigNumber amt) : cur(cur), amt(amt) {}
+  Price(BigNumber amt) : cur(Currencies::Currency_X), amt(amt) {}
+
+  Currencies cur;
+  BigNumber amt;
+
+  std::string toString();
+  Text toText();
 };

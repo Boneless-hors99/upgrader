@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 3.16)
 project(upgrader LANGUAGES CXX)
 
 # ---- Global settings ----
-set(CMAKE_CXX_STANDARD 20)
+set(CMAKE_CXX_STANDARD 23)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
@@ -49,9 +49,11 @@ add_executable(upgrader
     src/main.cpp
     src/Game.cpp
     src/Text.cpp
+    src/Currency.cpp
     src/Upgrades.cpp
     src/UpgradeFactory.cpp
     src/Resources.cpp
+    src/User.cpp
 )
 
 target_include_directories(upgrader SYSTEM PRIVATE

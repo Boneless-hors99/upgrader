@@ -1,6 +1,8 @@
 #include "Currency.hpp"
+#include "Text.hpp"
 #include <cmath>
 #include <cstdint>
+#include <format>
 
 using namespace std;
 
@@ -64,8 +66,45 @@ BigNumber BigNumber::operator+(const BigNumber &b) {
   return BigNumber(n + b.shiftTo(e), e);
 }
 
+void BigNumber::operator+=(const BigNumber &b) { *this = *this + b; }
+
 BigNumber BigNumber::operator-(const BigNumber &b) {
   if (b > *this)
     return BigNumber(0.0f);
   return BigNumber(n - b.shiftTo(e), e);
 }
+
+void BigNumber::operator-=(const BigNumber &b) { *this = *this - b; }
+
+std::string BigNumber::toString() {
+  std::string s = std::format("{:.5f}", n);
+
+  // Trim trailing zeros from mantissa
+  auto end = s.find_last_not_of('0');
+  if (end != std::string::npos) {
+    s.erase(end + 1);
+  }
+
+  // Remove trailing dot if needed
+  if (!s.empty() && s.back() == '.') {
+    s.pop_back();
+  }
+
+  // Only add exponent if > 0
+  if (e > 0) {
+    s += std::format("e{}", e);
+  }
+
+  return s;
+}
+
+string CtoString(Currencies currency) {
+  switch (currency) {
+  case Currencies::Currency_X:
+    return "X";
+  }
+}
+
+string Price::toString() { return amt.toString() + CtoString(cur); }
+using enum TextColor;
+Text Price::toText() { return Text(toString(), XCOL); }
