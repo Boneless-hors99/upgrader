@@ -6,8 +6,10 @@
 #include <GL/gl.h>
 #include <cstdint>
 #include <fstream>
+#include <functional>
 #include <imgui.h>
 #include <unordered_map>
+#include <utility>
 #include <vector>
 
 #include <entt/entt.hpp>
@@ -88,19 +90,54 @@ inline bool operator==(const UpgradeVec &v1, const UpgradeVec &v2) {
   return (v1.x == v2.x) && (v1.y == v2.y);
 }
 
+using UpgradeFlags = uint16_t; // TODO: expand this if anything needs > 16 flags
+
+enum UpgradeDrawerFlag {
+  None = 0,
+  NeedPurchase = 1 >> 0,
+  NeedHover = 1 >> 1,
+  NeedActive = 1 >> 2,
+  NeedDisabled = 1 >> 3, // Not due to purchase
+};
+
+// Pass upgrade center pos on screen to draw()
+struct UpgradeDrawer {
+  UpgradeDrawer(std::function<void(ImVec2)> draw, UpgradeFlags flags)
+      : draw(std::move(draw)), flags(flags) {}
+  std::function<void(ImVec2)> draw;
+  UpgradeFlags flags;
+};
+
+enum UpgradeBuyerFlag {
+  OnlyOnce = 1 >> 0, // Normally just things shown to the user once
+  OnLoad = 1 >> 1,   // Should be one most of the time, ex: first upgrade
+};
+
+struct UpgradeBuyer {
+  UpgradeBuyer(std::function<void()> buy, UpgradeFlags flags)
+      : buy(std::move(buy)), flags(flags) {}
+  std::function<void()> buy;
+  UpgradeFlags flags;
+};
+
 #define CONNECTIONS std::vector<UpgradeVec>
 
 class Upgrade {
 public:
   Upgrade(UpgradeVec p, Desc name, Price pr, Desc d, CONNECTIONS c)
       : m_pos(p), m_name(std::move(name)), m_price(pr),
-        m_description(std::move(d)), m_connections(std::move(c)) {}
+        m_description(std::move(d)), m_connections(std::move(c)),
+        m_bought(false) {}
   void SetPos(UpgradeVec v) { m_pos = v; }
 
-  bool Draw(ImVec2 pos, ImDrawList *list);
+  std::pair<bool, UpgradeFlags> Draw(ImVec2 pos, ImDrawList *list);
 
+  bool Bought() { return m_bought; }
   bool Visible() { return m_visibility <= 1; }
   void SetVisibility(int vis) { m_visibility = vis; }
+
+  bool CanBuy();
+  void Buy();
 
 private:
   // STATIC MEMBERS
@@ -113,6 +150,7 @@ private:
 
   // DYNAMIC MEMBERS
   unsigned int m_visibility;
+  bool m_bought;
 };
 
 class UpgradeManager {

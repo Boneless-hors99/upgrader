@@ -1,4 +1,5 @@
 #pragma once
+#include <utility>
 #define IMGUI_DEFINE_MATH_OPERATORS
 #include <imgui.h>
 #include <memory>
@@ -19,7 +20,8 @@
 
 enum class TextColor { BLACK, WHITE, LIGHT_GREY, RED, GREEN, BLUE, NONE };
 
-#define XCOL WHITE, BLACK
+using TextColors = std::pair<TextColor, TextColor>;
+const TextColors XColors(TextColor::WHITE, TextColor::BLACK);
 
 ImU32 Col32(TextColor col);
 ImVec4 ColV4(TextColor col);
@@ -29,6 +31,8 @@ public:
   Text(std::string_view str, TextColor col = TextColor::BLACK,
        TextColor backcol = TextColor::NONE)
       : m_str(str), m_col(col), m_backcol(backcol) {}
+  Text(std::string_view str, TextColors cols)
+      : m_str(str), m_col(cols.first), m_backcol(cols.second) {}
 
   std::string str() const;
   const char *chr();

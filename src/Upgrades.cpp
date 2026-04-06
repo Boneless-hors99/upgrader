@@ -1,4 +1,5 @@
 #include "Upgrades.hpp"
+#include "Game.hpp"
 #include "Text.hpp"
 #include "entt/entity/fwd.hpp"
 #include <GL/gl.h>
@@ -68,12 +69,12 @@ ImTextureID UpgradeVec::tex() {
   return 0;
 }
 
-bool Upgrade::Draw(ImVec2 pos, ImDrawList *list) {
+std::pair<bool, UpgradeFlags> Upgrade::Draw(ImVec2 pos, ImDrawList *list) {
   ImGui::SetCursorPos(pos - UPGRADE_SIZE / 2.0f);
 
   ImTextureID tex = m_pos.tex();
   if (!tex) {
-    return false;
+    return {false, 0};
   }
 
   list->ChannelsSetCurrent(0);
@@ -85,18 +86,46 @@ bool Upgrade::Draw(ImVec2 pos, ImDrawList *list) {
   }
 
   list->ChannelsSetCurrent(1);
+
+  UpgradeFlags flags = 0;
+  if (m_bought) {
+    ImGui::BeginDisabled();
+    flags |= UpgradeDrawerFlag::NeedPurchase;
+  }
+
   bool clicked = ImGui::ImageButton(std::to_string(m_pos.i64()).c_str(),
                                     ImTextureRef(tex), UPGRADE_SIZE);
 
-  if (ImGui::IsItemHovered()) {
-    // TODO: TITLE & TYPES (CHECK BALATRO)
+  if (m_bought)
+    ImGui::EndDisabled();
+
+  if (ImGui::IsItemHovered(ImGuiHoveredFlags_AllowWhenDisabled)) {
+    list->ChannelsSetCurrent(3);
     ImVec2 descpos(pos.x, pos.y + UPGRADE_SIZE.y / 1.6f);
     descpos.y += m_name.Render(descpos, 200.0f);
     descpos.y += m_description.Render(descpos, 200.0f);
     Desc price(m_price.toText());
     price.Render(descpos, 200.0f);
+    flags |= UpgradeDrawerFlag::NeedHover;
   }
-  return clicked;
+  flags |= flags & UpgradeDrawerFlag::NeedActive
+               ? 0
+               : UpgradeDrawerFlag::NeedDisabled;
+  return {clicked, flags};
+}
+
+bool Upgrade::CanBuy() {
+  return m_price.amt == 0.0f ||
+         GameState::instance().currencies[m_price.cur] >= m_price.amt;
+}
+
+void Upgrade::Buy() {
+  if (m_price.amt > 0.0f)
+    GameState::instance().currencies[m_price.cur] -= m_price.amt;
+  auto &i = UpgradeManager::instance();
+  if (i.GetRegistry().all_of<UpgradeBuyer>(i.GetUpgrade(m_pos)))
+    i.GetRegistry().get<UpgradeBuyer>(i.GetUpgrade(m_pos)).buy();
+  m_bought = true;
 }
 
 UpgradeManager &UpgradeManager::instance() {

@@ -114,7 +114,7 @@ std::string BigNumber::toString() {
 void BigNumber::Selector() {
   bool changed = false;
   ImGui::SetNextItemWidth(250.0f);
-  changed += ImGui::SliderFloat("n", &n, 0.0f, 1.0f, "%.5f");
+  changed += ImGui::SliderFloat("n", &n, 0.0f, 10.0f, "%.5f");
   ImGui::SameLine();
   ImGui::SetNextItemWidth(150.0f);
   changed += ImGui::InputScalar("e", ImGuiDataType_U64, &e);
@@ -131,7 +131,7 @@ string CtoString(Currencies currency) {
 
 string Currency::toString() { return amt.toString() + CtoString(cur); }
 using enum TextColor;
-Text Currency::toText() { return Text(toString(), XCOL); }
+Text Currency::toText() { return Text(toString(), XColors); }
 
 BigNumber CurrencyGain::operator()() const { return base * mult; }
 

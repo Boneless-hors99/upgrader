@@ -85,7 +85,6 @@ void Game::init() {
   InitThreads();
   auto &style = ImGui::GetStyle();
   style.Colors[ImGuiCol_Button] = ImVec4(0.95, 0.95f, 0.95f, 1.0f);
-  GameState::instance().currencies[Currencies::Currency_X] = BigNumber();
 }
 
 void Game::UpdateCurrencies(float delta) {
@@ -132,7 +131,7 @@ void Game::DrawUpgrades() {
   auto &reg = i.GetRegistry();
 
   ImDrawList *list = ImGui::GetWindowDrawList();
-  list->ChannelsSplit(2);
+  list->ChannelsSplit(4);
 
   while (!done) {
 
@@ -149,7 +148,19 @@ void Game::DrawUpgrades() {
       draw_pos.y += screen_pos.y * UPGRADE_SPACE.y;
       draw_pos += m_offset;
 
-      up.Draw(draw_pos, list);
+      auto out = up.Draw(draw_pos, list);
+
+      if (reg.all_of<UpgradeDrawer>(ent)) {
+        UpgradeDrawer drawer = reg.get<UpgradeDrawer>(ent);
+        if (drawer.flags & out.second) {
+          list->ChannelsSetCurrent(2);
+          drawer.draw(center);
+        }
+      }
+
+      if (out.first && up.CanBuy()) {
+        up.Buy();
+      }
     }
 
     if (cursor == fits) {
