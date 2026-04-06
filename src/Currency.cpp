@@ -89,7 +89,7 @@ BigNumber BigNumber::operator*(const float &f) const {
 
 std::string BigNumber::toString() {
   if (e < 4)
-    return std::format("{}", (int)(n * e));
+    return std::format("{}", (int)(n * pow(10, e)));
   std::string s = std::format("{:.5f}", n);
 
   // Trim trailing zeros from mantissa
