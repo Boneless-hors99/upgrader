@@ -66,6 +66,8 @@ public:
     (Append(Text(std::forward<Args>(args))), ...);
   }
 
+  explicit Desc(std::string s) { Append(Text(s)); }
+
   // Returns total width of texts in description
   float msr() {
     float sum{};

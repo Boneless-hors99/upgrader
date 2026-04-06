@@ -1,12 +1,13 @@
 #include "Currency.hpp"
 #include "Text.hpp"
+#include "imgui.h"
 #include <cmath>
 #include <cstdint>
 #include <format>
 
 using namespace std;
 
-BigNumber::BigNumber(float n, uint64_t e) : n(n), e(e) { norm(); }
+BigNumber::BigNumber(float n, int64_t e) : n(n), e(e) { norm(); }
 
 BigNumber::BigNumber(float n) : BigNumber(n, 0) {}
 
@@ -27,9 +28,9 @@ void BigNumber::norm() {
   }
 }
 
-float BigNumber::shiftTo(uint64_t new_e) const {
+float BigNumber::shiftTo(int64_t new_e) const {
   float new_n = n;
-  uint64_t temp_e = e;
+  int64_t temp_e = e;
   while (temp_e < new_e) {
     new_n /= 10;
     temp_e++;
@@ -51,15 +52,15 @@ bool operator>(const BigNumber &b1, const BigNumber &b2) {
   return b1.n > b2.n;
 }
 
-bool BigNumber::operator>=(const BigNumber &b) {
+bool BigNumber::operator>=(const BigNumber &b) const {
   return (*this == b) || (*this > b);
 }
 
-bool BigNumber::operator<(const BigNumber &b) { return !(*this >= b); }
+bool BigNumber::operator<(const BigNumber &b) const { return !(*this >= b); }
 
-bool BigNumber::operator<=(const BigNumber &b) { return !(*this > b); }
+bool BigNumber::operator<=(const BigNumber &b) const { return !(*this > b); }
 
-BigNumber BigNumber::operator+(const BigNumber &b) {
+BigNumber BigNumber::operator+(const BigNumber &b) const {
   if (e < b.e)
     return BigNumber(b.n + shiftTo(b.e), b.e);
 
@@ -68,7 +69,7 @@ BigNumber BigNumber::operator+(const BigNumber &b) {
 
 void BigNumber::operator+=(const BigNumber &b) { *this = *this + b; }
 
-BigNumber BigNumber::operator-(const BigNumber &b) {
+BigNumber BigNumber::operator-(const BigNumber &b) const {
   if (b > *this)
     return BigNumber(0.0f);
   return BigNumber(n - b.shiftTo(e), e);
@@ -76,7 +77,19 @@ BigNumber BigNumber::operator-(const BigNumber &b) {
 
 void BigNumber::operator-=(const BigNumber &b) { *this = *this - b; }
 
+BigNumber BigNumber::operator*(const BigNumber &b) const {
+  return BigNumber(n * b.n, e + b.e);
+}
+
+void BigNumber::operator*=(const BigNumber &b) { *this = *this * b; }
+
+BigNumber BigNumber::operator*(const float &f) const {
+  return BigNumber(n * f, e);
+}
+
 std::string BigNumber::toString() {
+  if (e < 4)
+    return std::format("{}", (int)(n * e));
   std::string s = std::format("{:.5f}", n);
 
   // Trim trailing zeros from mantissa
@@ -98,6 +111,17 @@ std::string BigNumber::toString() {
   return s;
 }
 
+void BigNumber::Selector() {
+  bool changed = false;
+  ImGui::SetNextItemWidth(250.0f);
+  changed += ImGui::SliderFloat("n", &n, 0.0f, 1.0f, "%.5f");
+  ImGui::SameLine();
+  ImGui::SetNextItemWidth(150.0f);
+  changed += ImGui::InputScalar("e", ImGuiDataType_U64, &e);
+  if (changed)
+    norm();
+}
+
 string CtoString(Currencies currency) {
   switch (currency) {
   case Currencies::Currency_X:
@@ -105,6 +129,15 @@ string CtoString(Currencies currency) {
   }
 }
 
-string Price::toString() { return amt.toString() + CtoString(cur); }
+string Currency::toString() { return amt.toString() + CtoString(cur); }
 using enum TextColor;
-Text Price::toText() { return Text(toString(), XCOL); }
+Text Currency::toText() { return Text(toString(), XCOL); }
+
+BigNumber CurrencyGain::operator()() const { return base * mult; }
+
+void CurrencyGain::operator+=(const BigNumber &b) { base += b; }
+
+void CurrencyGain::operator*=(const BigNumber &b) { mult *= b; }
+
+void CurrencyGain::operator^=(const BigNumber &b) {}
+// TODO: Implement exponents

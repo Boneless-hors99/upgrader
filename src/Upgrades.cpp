@@ -85,19 +85,18 @@ bool Upgrade::Draw(ImVec2 pos, ImDrawList *list) {
   }
 
   list->ChannelsSetCurrent(1);
-  ImGui::ImageButton(std::to_string(m_pos.i64()).c_str(), ImTextureRef(tex),
-                     UPGRADE_SIZE);
+  bool clicked = ImGui::ImageButton(std::to_string(m_pos.i64()).c_str(),
+                                    ImTextureRef(tex), UPGRADE_SIZE);
 
   if (ImGui::IsItemHovered()) {
     // TODO: TITLE & TYPES (CHECK BALATRO)
     ImVec2 descpos(pos.x, pos.y + UPGRADE_SIZE.y / 1.6f);
+    descpos.y += m_name.Render(descpos, 200.0f);
     descpos.y += m_description.Render(descpos, 200.0f);
     Desc price(m_price.toText());
     price.Render(descpos, 200.0f);
-    return true;
   }
-
-  return false;
+  return clicked;
 }
 
 UpgradeManager &UpgradeManager::instance() {

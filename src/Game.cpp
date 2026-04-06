@@ -1,11 +1,14 @@
 #include "Game.hpp"
+#include "Currency.hpp"
 #include "Upgrades.hpp"
 
 #include "imgui.h"
 #include "imgui_impl_glfw.h"
 #include "imgui_impl_opengl3.h"
 #include <GLFW/glfw3.h>
+#include <chrono>
 #include <iostream>
+#include <thread>
 
 void Game::InitUpgrades() {
   m_pos = UpgradeVec(0);
@@ -66,12 +69,55 @@ void Game::InitWindow() {
   ImGui_ImplOpenGL3_Init(glsl_version);
 }
 
+void Game::InitThreads() {
+  m_threads[Threads::CURRENCY_GAINS] = std::thread([]() {
+    while (GameState::instance().running) {
+      Game::UpdateCurrencies(1.0f);
+      std::this_thread::sleep_for(std::chrono::seconds(1));
+    }
+  });
+}
+
 void Game::init() {
+  GameState::instance().running = true;
   InitUpgrades();
   InitWindow();
+  InitThreads();
   auto &style = ImGui::GetStyle();
   style.Colors[ImGuiCol_Button] = ImVec4(0.95, 0.95f, 0.95f, 1.0f);
+  GameState::instance().currencies[Currencies::Currency_X] = BigNumber();
 }
+
+void Game::UpdateCurrencies(float delta) {
+  for (auto &gain : GameState::instance().currency_gains) {
+    GameState::instance().currencies[gain.first] += gain.second() * delta;
+  }
+}
+
+#ifdef DEBUG
+void Game::DrawDebug() {
+
+  ImGui::Begin("Debug", nullptr, ImGuiWindowFlags_None);
+
+  for (auto &currency : GameState::instance().currencies) {
+
+    ImGui::PushID((int)currency.first >> 1);
+    currency.second.Selector();
+    ImGui::SameLine();
+    ImGui::Text("%s", CtoString(currency.first).c_str());
+    ImGui::PopID();
+
+    ImGui::PushID(((int)currency.first >> 1) + 1);
+    CurrencyGain &gain = GameState::instance().currency_gains[currency.first];
+    gain.base.Selector();
+    ImGui::SameLine();
+    ImGui::Text("/s");
+    ImGui::PopID();
+  }
+
+  ImGui::End();
+}
+#endif // DEBUG
 
 void Game::DrawUpgrades() {
   auto &i = UpgradeManager::instance();
@@ -141,6 +187,10 @@ void Game::DrawAll() {
 
   ImGui::End();
 
+#ifdef DEBUG
+  DrawDebug();
+#endif // DEBUG
+
   ImGui::Render();
   int display_w, display_h;
   glfwGetFramebufferSize(m_window, &display_w, &display_h);
@@ -154,9 +204,9 @@ void Game::DrawAll() {
 }
 
 void Game::loop() {
-  while (!m_end) {
+  while (GameState::instance().running) {
     glfwPollEvents();
-    m_end = glfwWindowShouldClose(m_window);
+    GameState::instance().running = !glfwWindowShouldClose(m_window);
 
     DrawAll();
   }
@@ -169,6 +219,10 @@ void Game::end() {
 
   glfwDestroyWindow(m_window);
   glfwTerminate();
+
+  for (auto &thread : m_threads) {
+    thread.second.join();
+  }
 }
 
 ImVec2 Game::WindowSize() { return DEFAULT_WINDOW_SIZE; }

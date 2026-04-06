@@ -56,6 +56,10 @@ add_executable(upgrader
     src/User.cpp
 )
 
+target_compile_definitions(upgrader
+    PRIVATE $<$<CONFIG:Debug>:DEBUG>
+)
+
 target_include_directories(upgrader SYSTEM PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/external/stb
 )

@@ -92,9 +92,9 @@ inline bool operator==(const UpgradeVec &v1, const UpgradeVec &v2) {
 
 class Upgrade {
 public:
-  Upgrade(UpgradeVec p, Price pr, Desc d, CONNECTIONS c)
-      : m_pos(p), m_price(pr), m_description(std::move(d)),
-        m_connections(std::move(c)) {}
+  Upgrade(UpgradeVec p, Desc name, Price pr, Desc d, CONNECTIONS c)
+      : m_pos(p), m_name(std::move(name)), m_price(pr),
+        m_description(std::move(d)), m_connections(std::move(c)) {}
   void SetPos(UpgradeVec v) { m_pos = v; }
 
   bool Draw(ImVec2 pos, ImDrawList *list);
@@ -105,6 +105,7 @@ public:
 private:
   // STATIC MEMBERS
   UpgradeVec m_pos;
+  Desc m_name;
   Price m_price;
   Desc m_description;
   // TODO: CONNECTIONS + DRAWING THEM
