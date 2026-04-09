@@ -1,4 +1,5 @@
 #pragma once
+#include <algorithm>
 #include <utility>
 #define IMGUI_DEFINE_MATH_OPERATORS
 #include <imgui.h>
@@ -18,13 +19,25 @@
 #define BLUE ImVec4(0.0f, 0.0f, 1.0f, 1.0f)
 */
 
-enum class TextColor { BLACK, WHITE, LIGHT_GREY, RED, GREEN, BLUE, NONE };
+enum class TextColor {
+  BLACK,
+  WHITE,
+  LIGHT_GREY,
+  DARK_GREY,
+  RED,
+  GREEN,
+  BLUE,
+  NONE
+};
 
 using TextColors = std::pair<TextColor, TextColor>;
 const TextColors XColors(TextColor::WHITE, TextColor::BLACK);
 
+ImVec4 DarkenV4(ImVec4 col);
+
 ImU32 Col32(TextColor col);
 ImVec4 ColV4(TextColor col);
+ImVec4 DarkenV4(TextColor col);
 
 class Text {
 public:
@@ -52,7 +65,9 @@ private:
   TextColor m_backcol;
 };
 
-void DrawDescBackground(ImVec2 pos, ImVec2 size);
+void DrawDescBackground(ImVec2 pos, ImVec2 size,
+                        TextColor col = TextColor::NONE,
+                        TextColor border_col = TextColor::NONE);
 
 #define LINES std::vector<Desc>
 
@@ -66,11 +81,17 @@ public:
 
   template <typename... Args>
     requires(std::is_base_of_v<Text, std::decay_t<Args>> && ...)
-  explicit Desc(Args &&...args) {
+  explicit Desc(TextColor col, Args &&...args) : m_border(col) {
     (Append(Text(std::forward<Args>(args))), ...);
   }
 
-  explicit Desc(std::string s) { Append(Text(s)); }
+  template <typename... Args>
+    requires(std::is_base_of_v<Text, std::decay_t<Args>> && ...)
+  explicit Desc(Args &&...args) : m_border(TextColor::NONE) {
+    (Append(Text(std::forward<Args>(args))), ...);
+  }
+
+  explicit Desc(std::string s) : m_border(TextColor::NONE) { Append(Text(s)); }
 
   // Returns total width of texts in description
   float msr() {
@@ -80,7 +101,7 @@ public:
     return sum;
   }
 
-  static int AddText(LINES *lines, Text text, float maxwidth) {
+  static float AddText(LINES *lines, Text text, float maxwidth) {
 
     if (!text.fits(maxwidth)) {
       return -1;
@@ -88,6 +109,7 @@ public:
 
     int line;
     bool finished = false;
+    float max_w = 0.0f;
     while (!finished) {
       line = static_cast<int>(lines->size()) - 1;
       float occupied = (*lines)[line].msr();
@@ -99,6 +121,7 @@ public:
         goto nextline;
 
       (*lines)[line].Append(splitted.first);
+      max_w = std::max(max_w, (*lines)[line].msr());
 
       if (splitted.second.str().empty()) {
         break;
@@ -110,14 +133,13 @@ public:
       lines->push_back(Desc(Text("")));
       line++;
     }
-    return line;
+    return max_w;
   }
 
   void RenderLine(ImVec2 pos) {
     ResetCursor();
     float s = msr();
     m_cursor.x -= s / 2.0f;
-    m_cursor.x += ImGui::CalcTextSize("M").x / 2.0f;
     for (const auto &t : m_text) {
       ImVec2 tpos = pos;
       t.Render(tpos + m_cursor);
@@ -125,22 +147,28 @@ public:
     }
   }
 
-  float Render(ImVec2 pos, float w) {
+  float Render(ImVec2 pos, float w, bool fit_background = true,
+               TextColor border_col = TextColor::NONE) {
     ResetCursor();
     LINES lines;
     lines.emplace_back();
-    int line = 0;
+    float line = 0;
+    float max_w = 0.0f;
 
     // Turns this description into LINES with each being maximum w long
     for (const auto &t : m_text) {
       line = AddText(&lines, t, w);
-      if (line < 0)
+      if (line < 0.0f)
         goto overflow;
+      max_w = std::max(max_w, line);
     }
 
     // *0.5f does the top padding
-    DrawDescBackground(pos, ImVec2(w + ImGui::GetFontSize() * 2.0f,
-                                   ImGui::GetFontSize() * (lines.size() + 1)));
+    DrawDescBackground(
+        pos,
+        ImVec2((fit_background ? line : w) + ImGui::GetFontSize() * 2.0f,
+               ImGui::GetFontSize() * (lines.size() + 1)),
+        TextColor::NONE, m_border == TextColor::NONE ? border_col : m_border);
     m_cursor.y += ImGui::GetFontSize() * 0.5f;
 
     for (Desc &l : lines) {
@@ -156,11 +184,13 @@ public:
     return m_cursor.y;
   }
 
-private:
   void Append(Text t) { m_text.push_back(std::move(t)); }
 
+private:
   std::vector<Text> m_text;
   ImVec2 m_cursor;
+
+  TextColor m_border;
 
   void ResetCursor() { m_cursor = {0.0f, 0.0f}; }
 };

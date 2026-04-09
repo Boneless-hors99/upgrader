@@ -49,11 +49,15 @@ struct Currency {
   Currencies cur;
   BigNumber amt;
 
-  std::string toString();
+  virtual std::string toString();
   Text toText();
 };
 
-struct Price : public Currency {};
+struct Price : public Currency {
+  using Currency::Currency;
+
+  std::string toString() override;
+};
 
 struct CurrencyGain {
   CurrencyGain() : base(0), mult(1), exp(1) {}
@@ -63,9 +67,12 @@ struct CurrencyGain {
   BigNumber mult;
   BigNumber exp;
 
+  BigNumber get() const;
   BigNumber operator()() const;
 
   void operator+=(const BigNumber &b);
   void operator*=(const BigNumber &b);
   void operator^=(const BigNumber &b);
+
+  std::string toString(bool parenthesis = false);
 };

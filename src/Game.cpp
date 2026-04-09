@@ -1,7 +1,9 @@
 #include "Game.hpp"
 #include "Currency.hpp"
+#include "Text.hpp"
 #include "Upgrades.hpp"
 
+#include "User.hpp"
 #include "imgui.h"
 #include "imgui_impl_glfw.h"
 #include "imgui_impl_opengl3.h"
@@ -83,8 +85,8 @@ void Game::init() {
   InitUpgrades();
   InitWindow();
   InitThreads();
-  auto &style = ImGui::GetStyle();
-  style.Colors[ImGuiCol_Button] = ImVec4(0.95, 0.95f, 0.95f, 1.0f);
+  Settings::instance().SetMainTheme();
+  Settings::instance().LoadFont();
 }
 
 void Game::UpdateCurrencies(float delta) {
@@ -96,7 +98,10 @@ void Game::UpdateCurrencies(float delta) {
 #ifdef DEBUG
 void Game::DrawDebug() {
 
-  ImGui::Begin("Debug", nullptr, ImGuiWindowFlags_None);
+  ImGui::Begin("debug", nullptr, ImGuiWindowFlags_None);
+
+  if (!ImGui::TreeNode("currencies"))
+    goto style;
 
   for (auto &currency : GameState::instance().currencies) {
 
@@ -114,6 +119,32 @@ void Game::DrawDebug() {
     ImGui::PopID();
   }
 
+  ImGui::TreePop();
+
+style:
+  if (!ImGui::TreeNode("style"))
+    goto end;
+
+  {
+    auto &style = Settings::instance().theme;
+    if (ImGui::Button("Apply"))
+      Settings::instance().ApplyTheme();
+    ImGui::InputFloat2("upgrade padding", (float *)&style.upgrade_padding);
+    ImGui::InputFloat("upgrade rounding", &style.upgrade_rounding);
+    ImGui::InputFloat("line thickness", &style.connection_thickness);
+    ImGui::Checkbox("upgrade randomness", &style.upgrade_random);
+    ImGui::Separator();
+    ImGui::InputFloat("description rounding", &style.desc_rounding);
+    ImGui::InputFloat("text rounding", &style.text_rounding);
+    ImGui::InputFloat2("description padding", (float *)&style.desc_padding);
+    ImGui::InputFloat2("text padding", (float *)&style.text_padding);
+    ImGui::Separator();
+    ImGui::InputFloat("font size", &style.font_size);
+  }
+
+  ImGui::TreePop();
+
+end:
   ImGui::End();
 }
 #endif // DEBUG
@@ -131,7 +162,10 @@ void Game::DrawUpgrades() {
   auto &reg = i.GetRegistry();
 
   ImDrawList *list = ImGui::GetWindowDrawList();
-  list->ChannelsSplit(4);
+  list->ChannelsSplit(5);
+  ImGui::PushStyleVar(ImGuiStyleVar_FrameRounding,
+                      Settings::instance().theme.upgrade_rounding);
+  ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(5.0f, 5.0f));
 
   while (!done) {
 
@@ -178,13 +212,17 @@ void Game::DrawUpgrades() {
     cursor.x++;
   }
 
+  ImGui::PopStyleVar(2);
   list->ChannelsMerge();
 }
 
 void Game::DrawAll() {
   ImGui_ImplOpenGL3_NewFrame();
   ImGui_ImplGlfw_NewFrame();
+
   ImGui::NewFrame();
+  ImGui::PushFont(Settings::instance().font,
+                  Settings::instance().theme.font_size);
 
   ImGui::SetNextWindowPos(ImVec2(0.0f, 0.0f));
   ImGui::SetNextWindowSize(ImGui::GetIO().DisplaySize);
@@ -202,6 +240,7 @@ void Game::DrawAll() {
   DrawDebug();
 #endif // DEBUG
 
+  ImGui::PopFont();
   ImGui::Render();
   int display_w, display_h;
   glfwGetFramebufferSize(m_window, &display_w, &display_h);

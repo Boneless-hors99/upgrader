@@ -1,10 +1,19 @@
 #include "Text.hpp"
+#include "User.hpp"
 #include "imgui.h"
 #include <sstream>
 #include <string>
 #include <utility>
 
 using enum TextColor;
+
+ImVec4 DarkenV4(ImVec4 col) {
+  ImVec4 out = col;
+  out.x /= 3.0f;
+  out.y /= 3.0f;
+  out.z /= 3.0f;
+  return out;
+}
 
 ImU32 Col32(TextColor col) {
   return ImGui::ColorConvertFloat4ToU32(ColV4(col));
@@ -18,6 +27,8 @@ ImVec4 ColV4(TextColor col) {
     return ImVec4(1.0f, 1.0f, 1.0f, 1.0f);
   case LIGHT_GREY:
     return ImVec4(0.85f, 0.85f, 0.85f, 1.0f);
+  case DARK_GREY:
+    return ImVec4(0.25f, 0.25f, 0.25f, 1.0f);
   case RED:
     return ImVec4(1.0f, 0.0f, 0.0f, 1.0f);
   case GREEN:
@@ -28,6 +39,8 @@ ImVec4 ColV4(TextColor col) {
     return ImVec4(0.0f, 0.0f, 0.0f, 0.0f);
   }
 }
+
+ImVec4 DarkenV4(TextColor col) { return DarkenV4(ColV4(col)); }
 
 std::string Text::str() const { return m_str; }
 const char *Text::chr() { return m_str.c_str(); }
@@ -78,9 +91,11 @@ void Text::Render(ImVec2 pos) const {
   ImGui::PushStyleColor(ImGuiCol_Text, Col32(m_col));
 
   if (m_backcol != NONE) {
-    // TODO: PADDING & ROUNDING
-    ImGui::GetWindowDrawList()->AddRectFilled(pos, pos + msr(),
-                                              Col32(m_backcol));
+    // TODO: PADDING
+    ImGui::GetWindowDrawList()->AddRectFilled(
+        pos - Settings::instance().theme.text_padding,
+        pos + msr() + Settings::instance().theme.text_padding, Col32(m_backcol),
+        Settings::instance().theme.text_rounding);
   }
 
   // TODO: NEW FONT & SIZE
@@ -89,7 +104,8 @@ void Text::Render(ImVec2 pos) const {
   ImGui::PopStyleColor();
 }
 
-void DrawDescBackground(ImVec2 pos, ImVec2 size) {
+void DrawDescBackground(ImVec2 pos, ImVec2 size, TextColor col,
+                        TextColor bordercolor) {
   auto *list = ImGui::GetWindowDrawList();
 
   ImVec2 start = pos;
@@ -98,6 +114,16 @@ void DrawDescBackground(ImVec2 pos, ImVec2 size) {
   ImVec2 end = pos;
   end.y += size.y;
   end.x += size.x / 2.0f;
+  float rounding = Settings::instance().theme.desc_rounding;
 
-  list->AddRectFilled(start, end, Col32(LIGHT_GREY));
+  if (bordercolor != NONE) {
+    list->AddRectFilled(start - Settings::instance().theme.desc_padding,
+                        end + Settings::instance().theme.desc_padding,
+                        Col32(bordercolor), rounding);
+    rounding -= Settings::instance().theme.desc_padding.x;
+  }
+
+  list->AddRectFilled(
+      start, end, Col32(col == NONE ? Settings::instance().theme.main : col),
+      Settings::instance().theme.desc_rounding);
 }

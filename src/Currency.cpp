@@ -4,6 +4,7 @@
 #include <cmath>
 #include <cstdint>
 #include <format>
+#include <string>
 
 using namespace std;
 
@@ -16,7 +17,7 @@ void BigNumber::norm() {
     e = 0;
     return;
   }
-  while (fabs(n) > 10.0f) {
+  while (fabs(n) >= 10.0f) {
     n /= 10.0f;
     e++;
   }
@@ -90,7 +91,7 @@ BigNumber BigNumber::operator*(const float &f) const {
 std::string BigNumber::toString() {
   if (e < 4)
     return std::format("{}", (int)(n * pow(10, e)));
-  std::string s = std::format("{:.5f}", n);
+  std::string s = std::format("{:.4f}", n);
 
   // Trim trailing zeros from mantissa
   auto end = s.find_last_not_of('0');
@@ -131,9 +132,16 @@ string CtoString(Currencies currency) {
 
 string Currency::toString() { return amt.toString() + CtoString(cur); }
 using enum TextColor;
-Text Currency::toText() { return Text(toString(), XColors); }
+Text Currency::toText() { return Text(this->toString(), XColors); }
 
-BigNumber CurrencyGain::operator()() const { return base * mult; }
+std::string Price::toString() {
+  if (amt == 0.0f)
+    return "free";
+  return Currency::toString();
+}
+
+BigNumber CurrencyGain::get() const { return base * mult; }
+BigNumber CurrencyGain::operator()() const { return get(); }
 
 void CurrencyGain::operator+=(const BigNumber &b) { base += b; }
 
@@ -141,3 +149,9 @@ void CurrencyGain::operator*=(const BigNumber &b) { mult *= b; }
 
 void CurrencyGain::operator^=(const BigNumber &b) {}
 // TODO: Implement exponents
+
+std::string CurrencyGain::toString(bool parenthesis) {
+  std::string out = parenthesis ? "(" : "";
+  out += "+" + get().toString() + "/s";
+  return parenthesis ? out + ")" : out;
+}

@@ -53,8 +53,11 @@ inline PackEntry *FindEntry(uint64_t key) {
 
 static std::unordered_map<uint64_t, ImTextureID> textureCache;
 
-const ImVec2 UPGRADE_SIZE(64.0f, 64.0f);
+const ImVec2 UPGRADE_SIZE(64.0f, 64.0f); // NOT TRUE UPGRADE SIZE
 const ImVec2 UPGRADE_SPACE(UPGRADE_SIZE * 2.5f);
+
+const ImVec2 UpgradeSize(bool include_border = true, float time_hovered = 0.0f);
+const ImVec2 UpgradeSpace();
 
 void RegisterUpgrades();
 
@@ -114,7 +117,8 @@ enum UpgradeBuyerFlag {
 };
 
 struct UpgradeBuyer {
-  UpgradeBuyer(std::function<void()> buy, UpgradeFlags flags)
+  UpgradeBuyer(std::function<void()> buy,
+               UpgradeFlags flags = UpgradeBuyerFlag::OnLoad)
       : buy(std::move(buy)), flags(flags) {}
   std::function<void()> buy;
   UpgradeFlags flags;
